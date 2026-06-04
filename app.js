@@ -11,7 +11,6 @@ const slotGuide = document.getElementById("slotGuide");
 const cameraFallback = document.getElementById("cameraFallback");
 const countdown = document.getElementById("countdown");
 const captureButton = document.getElementById("captureButton");
-const skipCameraButton = document.getElementById("skipCameraButton");
 const retakeButton = document.getElementById("retakeButton");
 const decorateButton = document.getElementById("decorateButton");
 const backToResultButton = document.getElementById("backToResultButton");
@@ -27,25 +26,36 @@ const finalPreview = document.getElementById("finalPreview");
 const photoStrip = document.getElementById("photoStrip");
 const stickerTray = document.getElementById("stickerTray");
 const finalImage = document.getElementById("finalImage");
-const renderCanvas = document.getElementById("renderCanvas");
 const bgm = document.getElementById("bgm");
 
-const FRAME_SRC = "./assets/result-frame.png?v=20260603-homecrt";
+const FRAME_SRC = "./assets/result-frame.png?v=20260604-clipfix";
 const GUIDE_SRCS = [
-  "./assets/slot-guide-1.png?v=20260603-homecrt",
-  "./assets/slot-guide-2.png?v=20260603-homecrt",
-  "./assets/slot-guide-3.png?v=20260603-homecrt",
-  "./assets/slot-guide-4.png?v=20260603-homecrt",
+  "./assets/slot-guide-1.png?v=20260604-clipfix",
+  "./assets/slot-guide-2.png?v=20260604-clipfix",
+  "./assets/slot-guide-3.png?v=20260604-clipfix",
+  "./assets/slot-guide-4.png?v=20260604-clipfix",
+];
+const CELEBRITY_SRCS = [
+  "./assets/slot-guide-1-cutout.png?v=20260604-single-render",
+  "./assets/slot-guide-2-cutout.png?v=20260604-single-render",
+  "./assets/slot-guide-3-cutout.png?v=20260604-single-render",
+  "./assets/slot-guide-4-cutout.png?v=20260604-single-render",
 ];
 
-const FRAME_WIDTH = 1920;
-const FRAME_HEIGHT = 1080;
-const SLOT_RECTS = [
+let CANVAS_WIDTH = 1920;
+let CANVAS_HEIGHT = 1080;
+let DESIGN_WIDTH = 1920;
+let DESIGN_HEIGHT = 1080;
+
+const BASE_CANVAS_WIDTH = 1920;
+const BASE_CANVAS_HEIGHT = 1080;
+const BASE_PHOTO_SLOTS = [
   { x: 207, y: 33, width: 743, height: 501 },
   { x: 969, y: 33, width: 743, height: 501 },
   { x: 207, y: 551, width: 743, height: 501 },
   { x: 969, y: 551, width: 743, height: 501 },
 ];
+let photoSlots = BASE_PHOTO_SLOTS.map((slot) => ({ ...slot }));
 
 const state = {
   photos: [],
@@ -54,15 +64,16 @@ const state = {
   drag: null,
   finalDataUrl: "",
   selectedSticker: null,
+  stickers: [],
 };
 
 const stickerAssets = {
-  butterfly: "./assets/sticker-butterfly.png?v=20260603-homecrt",
-  ribbon: "./assets/sticker-ribbon.png?v=20260603-homecrt",
-  starline: "./assets/sticker-starline.png?v=20260603-homecrt",
-  star: "./assets/sticker-star.png?v=20260603-homecrt",
-  nami: "./assets/sticker-nami.png?v=20260603-homecrt",
-  kawaii: "./assets/sticker-kawaii.png?v=20260603-homecrt",
+  butterfly: "./assets/sticker-butterfly.png?v=20260604-clipfix",
+  ribbon: "./assets/sticker-ribbon.png?v=20260604-clipfix",
+  starline: "./assets/sticker-starline.png?v=20260604-clipfix",
+  star: "./assets/sticker-star.png?v=20260604-clipfix",
+  nami: "./assets/sticker-nami.png?v=20260604-clipfix",
+  kawaii: "./assets/sticker-kawaii.png?v=20260604-clipfix",
 };
 
 function showScreen(name) {
@@ -72,6 +83,21 @@ function showScreen(name) {
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function syncFrameMetrics(frameImage) {
+  DESIGN_WIDTH = frameImage.naturalWidth || BASE_CANVAS_WIDTH;
+  DESIGN_HEIGHT = frameImage.naturalHeight || BASE_CANVAS_HEIGHT;
+  CANVAS_WIDTH = DESIGN_WIDTH;
+  CANVAS_HEIGHT = DESIGN_HEIGHT;
+  const scaleX = DESIGN_WIDTH / BASE_CANVAS_WIDTH;
+  const scaleY = DESIGN_HEIGHT / BASE_CANVAS_HEIGHT;
+  photoSlots = BASE_PHOTO_SLOTS.map((slot) => ({
+    x: slot.x * scaleX,
+    y: slot.y * scaleY,
+    w: slot.width * scaleX,
+    h: slot.height * scaleY,
+  }));
 }
 
 function playBgm() {
@@ -131,6 +157,8 @@ async function startCamera() {
   showScreen("booth");
   state.photos = [];
   state.finalDataUrl = "";
+  state.stickers = [];
+  state.selectedSticker = null;
   updateCaptureUi();
 
   try {
@@ -163,27 +191,40 @@ function updateCaptureUi() {
   renderFramePreview(capturePreview);
 }
 
+function clearPreviewPhotos(container) {
+  container?.querySelectorAll(".result-preview__photo").forEach((slot) => {
+    slot.innerHTML = "";
+    slot.classList.remove("is-active");
+  });
+}
+
 function renderFramePreview(container) {
   if (!container) return;
-  container.querySelectorAll(".result-guide-overlay").forEach((overlay) => overlay.remove());
-  SLOT_RECTS.forEach((_, index) => {
+  container.classList.remove("has-rendered-image");
+  container.querySelectorAll(".rendered-preview-canvas, .rendered-preview-image, .result-guide-overlay").forEach((overlay) => overlay.remove());
+  photoSlots.forEach((_, index) => {
     const slot = container.querySelector(`.slot-${index + 1}`);
     if (!slot) return;
     slot.innerHTML = "";
     slot.classList.toggle("is-active", index === state.photos.length && state.photos.length < 4);
-    if (!state.photos[index]) return;
-    const image = document.createElement("img");
-    image.src = state.photos[index];
-    image.alt = `Photo ${index + 1}`;
-    image.style.zIndex = 5;
-    slot.append(image);
+    if (state.photos[index]) {
+      const image = document.createElement("img");
+      image.src = state.photos[index];
+      image.alt = `Photo ${index + 1}`;
+      image.style.zIndex = 5;
+      slot.append(image);
+    }
 
     const guide = document.createElement("img");
-    guide.className = `result-guide-overlay slot-${index + 1}`;
-    guide.src = GUIDE_SRCS[index];
+    guide.className = "slot-person-overlay";
+    guide.src = CELEBRITY_SRCS[index];
+    guide.onerror = () => {
+      guide.onerror = null;
+      guide.src = GUIDE_SRCS[index];
+    };
     guide.alt = "";
     guide.setAttribute("aria-hidden", "true");
-    container.append(guide);
+    slot.append(guide);
   });
 }
 
@@ -249,12 +290,23 @@ async function captureSequence() {
 async function createSamplePhotos() {
   state.photos = [];
   for (let index = 0; index < 4; index += 1) {
-    const guide = await loadImage(GUIDE_SRCS[index]);
     const canvas = document.createElement("canvas");
-    canvas.width = guide.naturalWidth;
-    canvas.height = guide.naturalHeight;
+    canvas.width = 743;
+    canvas.height = 497;
     const ctx = canvas.getContext("2d");
-    ctx.drawImage(guide, 0, 0);
+    ctx.fillStyle = ["#ffd3ef", "#bdf8ff", "#fff7a8", "#ffc0e4"][index];
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "rgba(255,255,255,0.72)";
+    for (let y = -20; y < canvas.height; y += 36) {
+      for (let x = -20; x < canvas.width; x += 36) {
+        ctx.fillRect(x, y, 12, 12);
+      }
+    }
+    ctx.fillStyle = "#ff149f";
+    ctx.font = "900 86px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(`SAMPLE ${index + 1}`, canvas.width / 2, canvas.height / 2);
     state.photos.push(canvas.toDataURL("image/png"));
   }
   stopCamera();
@@ -272,71 +324,188 @@ function drawCoverImage(ctx, image, x, y, width, height) {
   ctx.drawImage(image, dx, dy, drawWidth, drawHeight);
 }
 
-async function composeBaseResult() {
-  const ctx = renderCanvas.getContext("2d");
-  renderCanvas.width = FRAME_WIDTH;
-  renderCanvas.height = FRAME_HEIGHT;
-  const frame = await loadImage(FRAME_SRC);
-  ctx.clearRect(0, 0, FRAME_WIDTH, FRAME_HEIGHT);
-  ctx.drawImage(frame, 0, 0, FRAME_WIDTH, FRAME_HEIGHT);
-
-  const images = await Promise.all(state.photos.map(loadImage));
-  images.forEach((image, index) => {
-    const rect = SLOT_RECTS[index];
-    drawCoverImage(ctx, image, rect.x, rect.y, rect.width, rect.height);
-  });
-
-  const guides = await Promise.all(GUIDE_SRCS.map(loadImage));
-  guides.forEach((guide, index) => {
-    const rect = SLOT_RECTS[index];
-    drawCoverImage(ctx, guide, rect.x, rect.y, rect.width, rect.height);
-  });
-
-  state.finalDataUrl = renderCanvas.toDataURL("image/png");
-  return state.finalDataUrl;
+function renderSlot(ctx, slot, userPhoto, celebrityImage) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(slot.x, slot.y, slot.w, slot.h);
+  ctx.clip();
+  if (userPhoto) drawCoverImage(ctx, userPhoto, slot.x, slot.y, slot.w, slot.h);
+  if (celebrityImage) drawCoverImage(ctx, celebrityImage, slot.x, slot.y, slot.w, slot.h);
+  ctx.restore();
 }
 
-async function openResult() {
-  renderFramePreview(finalPreview);
+async function drawSticker(ctx, stickerState) {
+  const image = await loadImage(stickerState.src);
+  const width = Number(stickerState.w || 0);
+  const height = Number(stickerState.h || 0);
+  const rotation = Number(stickerState.rotation || 0) * Math.PI / 180;
+  ctx.save();
+  ctx.translate(Number(stickerState.x || 0) + width / 2, Number(stickerState.y || 0) + height / 2);
+  ctx.rotate(rotation);
+  ctx.drawImage(image, -width / 2, -height / 2, width, height);
+  ctx.restore();
+}
+
+async function createFinalCanvas({ includeStickers = true } = {}) {
+  const resultFrame = await loadImage(FRAME_SRC);
+  syncFrameMetrics(resultFrame);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = DESIGN_WIDTH;
+  canvas.height = DESIGN_HEIGHT;
+  const ctx = canvas.getContext("2d");
+
+  const [userPhotos, celebrityImages] = await Promise.all([
+    Promise.all(state.photos.map(loadImage)),
+    Promise.all(CELEBRITY_SRCS.map(loadImage)),
+  ]);
+
+  console.log("resultFrame.naturalWidth / naturalHeight", resultFrame.naturalWidth, resultFrame.naturalHeight);
+  console.log("exportCanvas.width / height", canvas.width, canvas.height);
+  console.log("photoSlots", photoSlots);
+  console.log("celebrityImages loaded status", celebrityImages.map((image, index) => ({
+    index: index + 1,
+    loaded: Boolean(image?.complete && image.naturalWidth),
+    width: image?.naturalWidth || 0,
+    height: image?.naturalHeight || 0,
+  })));
+
+  ctx.clearRect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT);
+
+  photoSlots.forEach((slot, index) => {
+    renderSlot(ctx, slot, userPhotos[index], celebrityImages[index]);
+  });
+
+  ctx.drawImage(resultFrame, 0, 0, DESIGN_WIDTH, DESIGN_HEIGHT);
+
+  if (includeStickers) {
+    for (const sticker of state.stickers) {
+      await drawSticker(ctx, sticker);
+    }
+  }
+
+  return canvas;
+}
+
+function mountPreviewCanvas(container, canvas) {
+  if (!container || !canvas) return;
+  clearPreviewPhotos(container);
+  container.classList.add("has-rendered-image");
+  container.querySelectorAll(".rendered-preview-canvas, .rendered-preview-image").forEach((item) => item.remove());
+  canvas.className = "rendered-preview-canvas";
+  canvas.setAttribute("aria-label", "Rendered Namikura photo");
+  container.prepend(canvas);
+}
+
+async function openResult(includeStickers = false) {
   try {
-    finalImage.src = await composeBaseResult();
+    const canvas = await createFinalCanvas({ includeStickers });
+    mountPreviewCanvas(finalPreview, canvas);
+    finalImage.removeAttribute("src");
   } catch (error) {
-    console.error("Failed to build final image", error);
+    console.error("Failed to build result preview", error);
     finalImage.removeAttribute("src");
   }
   showScreen("result");
 }
 
-function openEditor() {
-  renderFramePreview(photoStrip);
-  photoStrip.querySelectorAll(".sticker").forEach((sticker) => sticker.remove());
+async function openEditor() {
   state.selectedSticker = null;
+  photoStrip.querySelectorAll(".sticker").forEach((sticker) => sticker.remove());
+  try {
+    const canvas = await createFinalCanvas({ includeStickers: false });
+    mountPreviewCanvas(photoStrip, canvas);
+    state.stickers.forEach((stickerState) => appendStickerDom(stickerState));
+  } catch (error) {
+    console.error("Failed to build editor photo", error);
+  }
   showScreen("editor");
 }
 
-function createSticker(type) {
+function appendStickerDom(stickerState) {
   const sticker = document.createElement("button");
   sticker.type = "button";
-  sticker.className = `sticker sticker--${type}`;
-  sticker.dataset.type = type;
-  sticker.dataset.src = stickerAssets[type];
-  sticker.dataset.rotation = String(Number(stickerRotate?.value || 0));
+  sticker.className = `sticker sticker--${stickerState.type || "image"}`;
+  sticker.dataset.id = stickerState.id;
+  sticker.dataset.src = stickerState.src;
+  sticker.dataset.rotation = String(stickerState.rotation || 0);
+  sticker.dataset.canvasX = String(stickerState.x);
+  sticker.dataset.canvasY = String(stickerState.y);
+  sticker.dataset.canvasWidth = String(stickerState.w);
+  sticker.dataset.canvasHeight = String(stickerState.h);
   sticker.setAttribute("aria-label", "Draggable sticker");
-  sticker.innerHTML = `<img src="${stickerAssets[type]}" alt="">`;
-  const base = photoStrip.getBoundingClientRect();
-  const size = Number(stickerSize?.value || 110);
-  sticker.style.width = `${size}px`;
-  sticker.style.height = `${size}px`;
-  sticker.style.left = `${base.width * 0.54}px`;
-  sticker.style.top = `${base.height * 0.12}px`;
-  updateStickerTransform(sticker);
+  sticker.innerHTML = `<img src="${stickerState.src}" alt="">`;
+  applyStickerDomFromCanvas(sticker);
   photoStrip.append(sticker);
-  selectSticker(sticker);
+  return sticker;
+}
+
+async function createSticker(type) {
+  const image = await loadImage(stickerAssets[type]);
+  const id = `sticker-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const size = Number(stickerSize?.value || 110);
+  const aspect = (image.naturalHeight || image.height || 1) / (image.naturalWidth || image.width || 1);
+  const previewWidth = size;
+  const previewHeight = size * aspect;
+  const stickerState = {
+    id,
+    type,
+    src: stickerAssets[type],
+    x: DESIGN_WIDTH * 0.54,
+    y: DESIGN_HEIGHT * 0.12,
+    w: previewToDesignX(previewWidth),
+    h: previewToDesignY(previewHeight),
+    rotation: Number(stickerRotate?.value || 0),
+  };
+  state.stickers.push(stickerState);
+  selectSticker(appendStickerDom(stickerState));
 }
 
 function updateStickerTransform(sticker) {
   const rotation = Number(sticker.dataset.rotation || 0);
   sticker.style.transform = `rotate(${rotation}deg)`;
+  const stickerState = state.stickers.find((item) => item.id === sticker.dataset.id);
+  if (stickerState) stickerState.rotation = rotation;
+}
+
+function designToPreviewX(value) {
+  return value * (photoStrip.offsetWidth / DESIGN_WIDTH);
+}
+
+function designToPreviewY(value) {
+  return value * (photoStrip.offsetHeight / DESIGN_HEIGHT);
+}
+
+function previewToDesignX(value) {
+  return value * (DESIGN_WIDTH / photoStrip.offsetWidth);
+}
+
+function previewToDesignY(value) {
+  return value * (DESIGN_HEIGHT / photoStrip.offsetHeight);
+}
+
+function applyStickerDomFromCanvas(sticker) {
+  sticker.style.left = `${designToPreviewX(Number(sticker.dataset.canvasX || 0))}px`;
+  sticker.style.top = `${designToPreviewY(Number(sticker.dataset.canvasY || 0))}px`;
+  sticker.style.width = `${designToPreviewX(Number(sticker.dataset.canvasWidth || 140))}px`;
+  sticker.style.height = `${designToPreviewY(Number(sticker.dataset.canvasHeight || 140))}px`;
+  updateStickerTransform(sticker);
+}
+
+function updateStickerCanvasFromDom(sticker) {
+  const stickerState = state.stickers.find((item) => item.id === sticker.dataset.id);
+  const next = {
+    x: previewToDesignX(parseFloat(sticker.style.left) || 0),
+    y: previewToDesignY(parseFloat(sticker.style.top) || 0),
+    w: previewToDesignX(sticker.offsetWidth || 0),
+    h: previewToDesignY(sticker.offsetHeight || 0),
+    rotation: Number(sticker.dataset.rotation || 0),
+  };
+  sticker.dataset.canvasX = String(next.x);
+  sticker.dataset.canvasY = String(next.y);
+  sticker.dataset.canvasWidth = String(next.w);
+  sticker.dataset.canvasHeight = String(next.h);
+  if (stickerState) Object.assign(stickerState, next);
 }
 
 function selectSticker(sticker) {
@@ -351,6 +520,7 @@ function selectSticker(sticker) {
 
 function deleteSelectedSticker() {
   if (!state.selectedSticker) return;
+  state.stickers = state.stickers.filter((item) => item.id !== state.selectedSticker.dataset.id);
   state.selectedSticker.remove();
   state.selectedSticker = null;
   if (deleteStickerButton) deleteStickerButton.disabled = true;
@@ -361,14 +531,17 @@ function returnHome() {
   state.photos = [];
   state.finalDataUrl = "";
   state.selectedSticker = null;
+  state.stickers = [];
   state.drag = null;
   finalImage.removeAttribute("src");
   [capturePreview, finalPreview, photoStrip].forEach((preview) => {
+    preview?.classList.remove("has-rendered-image");
+    preview?.querySelectorAll(".rendered-preview-canvas, .rendered-preview-image").forEach((image) => image.remove());
     preview?.querySelectorAll(".result-preview__photo").forEach((slot) => {
       slot.innerHTML = "";
       slot.classList.remove("is-active");
     });
-    preview?.querySelectorAll(".result-guide-overlay, .sticker").forEach((item) => item.remove());
+    preview?.querySelectorAll(".slot-person-overlay, .sticker").forEach((item) => item.remove());
   });
   if (deleteStickerButton) deleteStickerButton.disabled = true;
   showScreen("onboarding");
@@ -398,24 +571,11 @@ function moveDrag(event) {
   const maxY = stripRect.height - sticker.offsetHeight;
   sticker.style.left = `${Math.max(0, Math.min(x, maxX))}px`;
   sticker.style.top = `${Math.max(0, Math.min(y, maxY))}px`;
+  updateStickerCanvasFromDom(sticker);
 }
 
 function endDrag() {
   state.drag = null;
-}
-
-async function drawSticker(ctx, sticker, scaleX, scaleY) {
-  const image = await loadImage(sticker.dataset.src);
-  const x = parseFloat(sticker.style.left) * scaleX;
-  const y = parseFloat(sticker.style.top) * scaleY;
-  const width = sticker.offsetWidth * scaleX;
-  const height = sticker.offsetHeight * scaleY;
-  const rotation = Number(sticker.dataset.rotation || 0) * Math.PI / 180;
-  ctx.save();
-  ctx.translate(x + width / 2, y + height / 2);
-  ctx.rotate(rotation);
-  ctx.drawImage(image, -width / 2, -height / 2, width, height);
-  ctx.restore();
 }
 
 async function saveImage(includeStickers = false) {
@@ -426,19 +586,9 @@ async function saveImage(includeStickers = false) {
   if (!saveTarget) return;
 
   try {
-    await composeBaseResult();
-    if (includeStickers) {
-      const ctx = renderCanvas.getContext("2d");
-      const stripRect = photoStrip.getBoundingClientRect();
-      const scaleX = FRAME_WIDTH / stripRect.width;
-      const scaleY = FRAME_HEIGHT / stripRect.height;
-      for (const sticker of photoStrip.querySelectorAll(".sticker")) {
-        await drawSticker(ctx, sticker, scaleX, scaleY);
-      }
-    }
-
-    const blob = await canvasToBlob(renderCanvas);
-    await saveTarget(blob);
+    const canvas = await createFinalCanvas({ includeStickers });
+    const blob = await canvasToBlob(canvas);
+    await saveTarget(blob, canvas);
   } catch (error) {
     console.error("Save failed", error);
     alert("저장 중 오류가 발생했습니다. http://localhost:4173/에서 실행 중인지 확인하고 다시 시도해 주세요.");
@@ -481,11 +631,11 @@ async function createSaveTarget(filename) {
     }
   }
 
-  return async (blob) => {
+  return async (blob, canvas) => {
     if (!blob || blob.size === 0) throw new Error("PNG save image is empty.");
     const link = document.createElement("a");
     link.download = filename;
-    link.href = renderCanvas.toDataURL("image/png");
+    link.href = canvas.toDataURL("image/png");
     link.style.display = "none";
     document.body.append(link);
     link.click();
@@ -503,10 +653,9 @@ startApp.addEventListener("click", () => {
 });
 
 captureButton.addEventListener("click", captureSequence);
-skipCameraButton.addEventListener("click", createSamplePhotos);
 retakeButton.addEventListener("click", startCamera);
 decorateButton.addEventListener("click", openEditor);
-backToResultButton.addEventListener("click", () => showScreen("result"));
+backToResultButton.addEventListener("click", () => openResult(true));
 savePreviewButton.addEventListener("click", () => saveImage(false));
 saveButton.addEventListener("click", () => saveImage(true));
 stickerTray.addEventListener("click", (event) => {
@@ -516,8 +665,11 @@ stickerTray.addEventListener("click", (event) => {
 stickerSize?.addEventListener("input", () => {
   if (!state.selectedSticker) return;
   const size = Number(stickerSize.value);
+  const stickerState = state.stickers.find((item) => item.id === state.selectedSticker.dataset.id);
+  const aspect = stickerState?.h && stickerState?.w ? stickerState.h / stickerState.w : 1;
   state.selectedSticker.style.width = `${size}px`;
-  state.selectedSticker.style.height = `${size}px`;
+  state.selectedSticker.style.height = `${size * aspect}px`;
+  updateStickerCanvasFromDom(state.selectedSticker);
 });
 stickerRotate?.addEventListener("input", () => {
   if (!state.selectedSticker) return;
@@ -538,6 +690,7 @@ window.addEventListener("keydown", (event) => {
 });
 window.addEventListener("DOMContentLoaded", playBgm);
 window.addEventListener("load", playBgm);
+document.addEventListener("click", spawnButtonSpark);
 
 function spawnCursorSparkle(event) {
   const sparkle = document.createElement("span");
@@ -546,4 +699,15 @@ function spawnCursorSparkle(event) {
   sparkle.style.top = `${event.clientY}px`;
   document.body.append(sparkle);
   setTimeout(() => sparkle.remove(), 720);
+}
+
+function spawnButtonSpark(event) {
+  const button = event.target.closest("button");
+  if (!button || button.disabled) return;
+  const burst = document.createElement("span");
+  burst.className = "button-spark-burst";
+  burst.style.left = `${event.clientX}px`;
+  burst.style.top = `${event.clientY}px`;
+  document.body.append(burst);
+  setTimeout(() => burst.remove(), 760);
 }

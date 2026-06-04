@@ -4,15 +4,15 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>NAMIKURA Photo Booth</title>
-    <link rel="stylesheet" href="./styles.css?v=20260603-purikurabg">
+    <link rel="stylesheet" href="./styles.css?v=20260604-button-spark">
   </head>
   <body>
     <main class="app">
       <section class="screen onboarding is-active" id="onboarding" aria-label="Start screen">
-        <img class="onboarding__back" src="./assets/onboarding-back.png?v=20260603-homecrt" alt="">
-        <img class="onboarding__frame" src="./assets/onboarding-frame.png?v=20260603-homecrt" alt="NAMIKURA start screen">
+        <img class="onboarding__back" src="./assets/onboarding-back.png?v=20260604-clipfix" alt="">
+        <img class="onboarding__frame" src="./assets/onboarding-frame.png?v=20260604-clipfix" alt="NAMIKURA start screen">
         <button class="start-art" id="startApp" type="button" aria-label="Start photo shoot">
-          <img src="./assets/start-button.png?v=20260603-homecrt" alt="いっしょにとる">
+          <img src="./assets/start-button.png?v=20260604-clipfix" alt="いっしょにとる">
         </button>
         <div class="sparkle-field" aria-hidden="true">
           <span></span><span></span><span></span><span></span><span></span><span></span>
@@ -30,11 +30,11 @@
 
       <section class="screen booth" id="booth" aria-label="Shoot screen">
         <div class="purikura-bg" aria-hidden="true">
-          <img class="purikura-bg__item sparkle" src="./assets/onboarding-sparkles.png?v=20260603-purikurabg" alt="">
-          <img class="purikura-bg__item butterfly" src="./assets/sticker-butterfly.png?v=20260603-purikurabg" alt="">
-          <img class="purikura-bg__item heart" src="./assets/sticker-kawaii.png?v=20260603-purikurabg" alt="">
-          <img class="purikura-bg__item star" src="./assets/sticker-star.png?v=20260603-purikurabg" alt="">
-          <img class="purikura-bg__item starline" src="./assets/sticker-starline.png?v=20260603-purikurabg" alt="">
+          <img class="purikura-bg__item sparkle" src="./assets/onboarding-sparkles.png?v=20260604-clipfix" alt="">
+          <img class="purikura-bg__item butterfly" src="./assets/sticker-butterfly.png?v=20260604-clipfix" alt="">
+          <img class="purikura-bg__item heart" src="./assets/sticker-kawaii.png?v=20260604-clipfix" alt="">
+          <img class="purikura-bg__item star" src="./assets/sticker-star.png?v=20260604-clipfix" alt="">
+          <img class="purikura-bg__item starline" src="./assets/sticker-starline.png?v=20260604-clipfix" alt="">
         </div>
         <div class="booth__stage booth__stage--frame">
           <div class="camera-shell">
@@ -44,7 +44,7 @@
             </div>
             <div class="camera-view">
               <video id="video" autoplay playsinline muted></video>
-            <img class="slot-guide" id="slotGuide" src="./assets/slot-guide-1.png?v=20260603-homecrt" alt="">
+            <img class="slot-guide" id="slotGuide" src="./assets/slot-guide-1.png?v=20260604-clipfix" alt="">
               <div class="camera-fallback" id="cameraFallback">
                 Allow camera access to start shooting.
               </div>
@@ -52,13 +52,12 @@
             </div>
             <div class="booth-controls">
               <button class="primary-button" id="captureButton" type="button">START SHOOT</button>
-              <button class="ghost-button" id="skipCameraButton" type="button">USE SAMPLE</button>
             </div>
           </div>
 
           <aside class="frame-preview-panel" aria-label="Result frame preview">
             <div class="result-preview mini" id="capturePreview">
-              <img class="result-preview__frame" src="./assets/result-frame.png?v=20260603-homecrt" alt="Final frame">
+              <img class="result-preview__frame" src="./assets/result-frame.png?v=20260604-clipfix" alt="Final frame">
               <div class="result-preview__photo slot-1"></div>
               <div class="result-preview__photo slot-2"></div>
               <div class="result-preview__photo slot-3"></div>
@@ -70,11 +69,11 @@
 
       <section class="screen result" id="result" aria-label="Result preview">
         <div class="purikura-bg" aria-hidden="true">
-          <img class="purikura-bg__item sparkle" src="./assets/onboarding-sparkles.png?v=20260603-purikurabg" alt="">
-          <img class="purikura-bg__item butterfly" src="./assets/sticker-butterfly.png?v=20260603-purikurabg" alt="">
-          <img class="purikura-bg__item heart" src="./assets/sticker-kawaii.png?v=20260603-purikurabg" alt="">
-          <img class="purikura-bg__item star" src="./assets/sticker-star.png?v=20260603-purikurabg" alt="">
-          <img class="purikura-bg__item starline" src="./assets/sticker-starline.png?v=20260603-purikurabg" alt="">
+          <img class="purikura-bg__item sparkle" src="./assets/onboarding-sparkles.png?v=20260604-clipfix" alt="">
+          <img class="purikura-bg__item butterfly" src="./assets/sticker-butterfly.png?v=20260604-clipfix" alt="">
+          <img class="purikura-bg__item heart" src="./assets/sticker-kawaii.png?v=20260604-clipfix" alt="">
+          <img class="purikura-bg__item star" src="./assets/sticker-star.png?v=20260604-clipfix" alt="">
+          <img class="purikura-bg__item starline" src="./assets/sticker-starline.png?v=20260604-clipfix" alt="">
         </div>
         <div class="result__workspace">
           <div class="toolbar">
@@ -83,7 +82,7 @@
             <button class="primary-button" id="savePreviewButton" type="button">SAVE</button>
           </div>
           <div class="result-preview final" id="finalPreview" aria-label="Final photo preview">
-            <img class="result-preview__frame" src="./assets/result-frame.png?v=20260603-homecrt" alt="">
+            <img class="result-preview__frame" src="./assets/result-frame.png?v=20260604-clipfix" alt="">
             <div class="result-preview__photo slot-1"></div>
             <div class="result-preview__photo slot-2"></div>
             <div class="result-preview__photo slot-3"></div>
@@ -95,22 +94,22 @@
 
       <section class="screen editor" id="editor" aria-label="Decorate screen">
         <div class="purikura-bg" aria-hidden="true">
-          <img class="purikura-bg__item sparkle" src="./assets/onboarding-sparkles.png?v=20260603-purikurabg" alt="">
-          <img class="purikura-bg__item butterfly" src="./assets/sticker-butterfly.png?v=20260603-purikurabg" alt="">
-          <img class="purikura-bg__item heart" src="./assets/sticker-kawaii.png?v=20260603-purikurabg" alt="">
-          <img class="purikura-bg__item star" src="./assets/sticker-star.png?v=20260603-purikurabg" alt="">
-          <img class="purikura-bg__item starline" src="./assets/sticker-starline.png?v=20260603-purikurabg" alt="">
+          <img class="purikura-bg__item sparkle" src="./assets/onboarding-sparkles.png?v=20260604-clipfix" alt="">
+          <img class="purikura-bg__item butterfly" src="./assets/sticker-butterfly.png?v=20260604-clipfix" alt="">
+          <img class="purikura-bg__item heart" src="./assets/sticker-kawaii.png?v=20260604-clipfix" alt="">
+          <img class="purikura-bg__item star" src="./assets/sticker-star.png?v=20260604-clipfix" alt="">
+          <img class="purikura-bg__item starline" src="./assets/sticker-starline.png?v=20260604-clipfix" alt="">
         </div>
         <div class="editor__workspace">
           <div class="toolbar" aria-label="Decorate tools">
             <button class="ghost-button" id="backToResultButton" type="button">PREVIEW</button>
             <div class="sticker-tray" id="stickerTray" aria-label="Stickers">
-              <button type="button" data-sticker="butterfly" aria-label="Butterfly sticker"><img src="./assets/sticker-butterfly.png?v=20260603-homecrt" alt=""></button>
-              <button type="button" data-sticker="ribbon" aria-label="Ribbon sticker"><img src="./assets/sticker-ribbon.png?v=20260603-homecrt" alt=""></button>
-              <button type="button" data-sticker="starline" aria-label="Star line sticker"><img src="./assets/sticker-starline.png?v=20260603-homecrt" alt=""></button>
-              <button type="button" data-sticker="star" aria-label="Star sticker"><img src="./assets/sticker-star.png?v=20260603-homecrt" alt=""></button>
-              <button type="button" data-sticker="nami" aria-label="Nami sticker"><img src="./assets/sticker-nami.png?v=20260603-homecrt" alt=""></button>
-              <button type="button" data-sticker="kawaii" aria-label="Kawaii sticker"><img src="./assets/sticker-kawaii.png?v=20260603-homecrt" alt=""></button>
+              <button type="button" data-sticker="butterfly" aria-label="Butterfly sticker"><img src="./assets/sticker-butterfly.png?v=20260604-clipfix" alt=""></button>
+              <button type="button" data-sticker="ribbon" aria-label="Ribbon sticker"><img src="./assets/sticker-ribbon.png?v=20260604-clipfix" alt=""></button>
+              <button type="button" data-sticker="starline" aria-label="Star line sticker"><img src="./assets/sticker-starline.png?v=20260604-clipfix" alt=""></button>
+              <button type="button" data-sticker="star" aria-label="Star sticker"><img src="./assets/sticker-star.png?v=20260604-clipfix" alt=""></button>
+              <button type="button" data-sticker="nami" aria-label="Nami sticker"><img src="./assets/sticker-nami.png?v=20260604-clipfix" alt=""></button>
+              <button type="button" data-sticker="kawaii" aria-label="Kawaii sticker"><img src="./assets/sticker-kawaii.png?v=20260604-clipfix" alt=""></button>
             </div>
             <label class="sticker-size-control">
               SIZE
@@ -127,7 +126,7 @@
 
           <div class="decorate-area">
             <div class="result-preview final" id="photoStrip" aria-label="Decorating photo">
-              <img class="result-preview__frame" src="./assets/result-frame.png?v=20260603-homecrt" alt="">
+              <img class="result-preview__frame" src="./assets/result-frame.png?v=20260604-clipfix" alt="">
               <div class="result-preview__photo slot-1"></div>
               <div class="result-preview__photo slot-2"></div>
               <div class="result-preview__photo slot-3"></div>
@@ -138,8 +137,7 @@
       </section>
     </main>
 
-    <audio id="bgm" src="./assets/namikura-bgm.mp3?v=20260603-bgm" autoplay loop preload="auto"></audio>
-    <canvas id="renderCanvas" width="1920" height="1080" hidden></canvas>
-    <script src="./app.js?v=20260603-bgm"></script>
+    <audio id="bgm" src="./assets/namikura-bgm.mp3?v=20260604-clipfix" autoplay loop preload="auto"></audio>
+    <script src="./app.js?v=20260604-capture-preview-celeb-fix"></script>
   </body>
 </html>
