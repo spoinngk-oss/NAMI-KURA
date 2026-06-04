@@ -42,6 +42,8 @@ const CELEBRITY_SRCS = [
   "./assets/slot-guide-4-cutout.png?v=20260604-single-render",
 ];
 
+const HADURI_FILTER = "brightness(1.2) contrast(1.34) saturate(1.14) blur(0.55px)";
+
 let CANVAS_WIDTH = 1920;
 let CANVAS_HEIGHT = 1080;
 let DESIGN_WIDTH = 1920;
@@ -159,17 +161,25 @@ async function startCamera() {
   state.finalDataUrl = "";
   state.stickers = [];
   state.selectedSticker = null;
+  cameraFallback.textContent = "Camera is starting...";
+  cameraFallback.classList.remove("is-hidden");
   updateCaptureUi();
 
   try {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new Error("Camera API is not available. Please open this page from http://localhost:4173/ or GitHub Pages.");
+    }
     state.stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 960 } },
       audio: false,
     });
     video.srcObject = state.stream;
+    await video.play();
     cameraFallback.classList.add("is-hidden");
     captureButton.disabled = false;
   } catch (error) {
+    console.error("Camera start failed", error);
+    cameraFallback.textContent = `Camera error: ${error?.message || error?.name || "Please allow camera access."}`;
     cameraFallback.classList.remove("is-hidden");
     captureButton.disabled = true;
   }
@@ -211,6 +221,7 @@ function renderFramePreview(container) {
       const image = document.createElement("img");
       image.src = state.photos[index];
       image.alt = `Photo ${index + 1}`;
+      image.className = "haduri-preview-photo";
       image.style.zIndex = 5;
       slot.append(image);
     }
@@ -324,12 +335,35 @@ function drawCoverImage(ctx, image, x, y, width, height) {
   ctx.drawImage(image, dx, dy, drawWidth, drawHeight);
 }
 
+function drawFilteredCoverImage(ctx, image, x, y, width, height) {
+  ctx.save();
+  ctx.filter = HADURI_FILTER;
+  drawCoverImage(ctx, image, x, y, width, height);
+  ctx.filter = "none";
+  ctx.globalCompositeOperation = "screen";
+  const glow = ctx.createRadialGradient(
+    x + width * 0.48,
+    y + height * 0.28,
+    0,
+    x + width * 0.48,
+    y + height * 0.28,
+    width * 0.78
+  );
+  glow.addColorStop(0, "rgba(255, 255, 255, 0.20)");
+  glow.addColorStop(0.46, "rgba(255, 232, 246, 0.11)");
+  glow.addColorStop(1, "rgba(255, 255, 255, 0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(x, y, width, height);
+  ctx.globalCompositeOperation = "source-over";
+  ctx.restore();
+}
+
 function renderSlot(ctx, slot, userPhoto, celebrityImage) {
   ctx.save();
   ctx.beginPath();
   ctx.rect(slot.x, slot.y, slot.w, slot.h);
   ctx.clip();
-  if (userPhoto) drawCoverImage(ctx, userPhoto, slot.x, slot.y, slot.w, slot.h);
+  if (userPhoto) drawFilteredCoverImage(ctx, userPhoto, slot.x, slot.y, slot.w, slot.h);
   if (celebrityImage) drawCoverImage(ctx, celebrityImage, slot.x, slot.y, slot.w, slot.h);
   ctx.restore();
 }
